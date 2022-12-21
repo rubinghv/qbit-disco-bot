@@ -4,7 +4,7 @@ from discord.ext import tasks
 from datetime import datetime
 
 from util import get_progress_bar
-from config import DISCORD_TOKEN, DISCORD_CHANNEL_ID
+from config import DISCORD_TOKEN, DISCORD_CHANNEL_ID, BOT_UPDATE_INTERVAL_SECONDS
 from qbit import get_torrents, TorrentStatus
 
 def get_client():
@@ -22,19 +22,20 @@ client = get_client()
 async def on_ready():
     print(f'We have logged in as {client.user}')
     channel = client.get_channel(DISCORD_CHANNEL_ID)
-    # await channel.send("I'm here")
-    # message = (await channel.history(limit=1).flatten())[0]
+
+    # if there is no message to edit, create one
+    if len(await channel.history(limit=1).flatten()) == 0:
+        await channel.send("Getting ready...")
+
     update_downloads.start()
 
-    # message = await channel.fetch_message(id_of_the_message)
-    # await send_download_status(message)
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=BOT_UPDATE_INTERVAL_SECONDS)
 async def update_downloads():
-    print("updating...")
     channel = client.get_channel(DISCORD_CHANNEL_ID)
     message = (await channel.history(limit=1).flatten())[0]
     await edit_download_status(message)
+
 
 @client.event
 async def on_message(message):
@@ -42,11 +43,9 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    await send_download_status(message)    
-
 
 @client.event
-async def edit_download_status(message, num_downloads=5):
+async def edit_download_status(message, num_downloads=10):
     torrents = get_torrents()
     embeds = []
     
@@ -57,13 +56,10 @@ async def edit_download_status(message, num_downloads=5):
     await message.edit(f'Last updated at: {datetime.now()}', embeds=embeds)
 
 
-# def delete_all_messages():
-
-
 def create_torrent_embed(torrent):
     user = client.user
     status_str =f"""{get_progress_bar(torrent.progress)} {torrent.get_progress_str()}%
-    {torrent.get_full_status_str()}"""
+{torrent.get_full_status_str()}"""
 
     embed = discord.Embed(
         title=torrent.name,
