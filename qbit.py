@@ -5,7 +5,7 @@ from loguru import logger
 from discord import Colour
 
 from config import QBITTORRENT_USERNAME, QBITTORRENT_PASSWORD, QBITTORRENT_LOCALHOST, QBITTORRENT_PORT
-from util import human_readable_size
+from util import human_readable_size, time_ago_str
 
 class TorrentStatus(Enum):
     PAUSED = 1
@@ -30,7 +30,8 @@ class TorrentStatus(Enum):
 
 class TorrentItem(object):
 
-    def __init__(self, name, status, added_on, size, completed, completion_on, dlspeed):
+    def __init__(self, name, status, added_on, size, completed, 
+                 completion_on, dlspeed, progress):
         self.name = name
         self.status = TorrentStatus.from_status_str(status)
         self.added_on = datetime.fromtimestamp(added_on)
@@ -38,6 +39,7 @@ class TorrentItem(object):
         self.completed = completed
         self.completed_on = datetime.fromtimestamp(completion_on)
         self.download_speed = dlspeed
+        self.progress = progress
 
     def get_status_color(self):
         if self.status == TorrentStatus.COMPLETED: 
@@ -66,8 +68,17 @@ class TorrentItem(object):
     def get_size_str(self):
         return human_readable_size(self.size)
 
-    def get_completed_str(self):
-        return human_readable_size(self.completed)
+    def get_progress_str(self):
+        return round(self.progress * 100)
+
+    def get_full_status_str(self):
+        if (self.status == TorrentStatus.COMPLETED):
+            return f'Finished {time_ago_str(self.completed_on)}'
+
+        else:
+            print("No status?")
+            
+        
 
 
 
@@ -89,7 +100,7 @@ def get_client():
         print(e)
         # logger.except(e)
 
-    for k,v in client.app.build_info.items(): print(f'{k}: {v}')
+    # for k,v in client.app.build_info.items(): print(f'{k}: {v}')
 
     return client
 
@@ -107,7 +118,8 @@ def get_torrents():
                 size=torrent.size,
                 completed=torrent.completed,
                 completion_on=torrent.completion_on,
-                dlspeed=torrent.dlspeed
+                dlspeed=torrent.dlspeed,
+                progress=torrent.progress,
             )
         )
         # print(f'{torrent.completed} / {torrent.size} ({torrent.progress}) - {torrent.eta}')

@@ -1,33 +1,11 @@
 import discord
 from discord.ext.pages import Paginator, Page
+from discord.ext import tasks
+from datetime import datetime
 
-from config import DISCORD_TOKEN
+from util import get_progress_bar
+from config import DISCORD_TOKEN, DISCORD_CHANNEL_ID
 from qbit import get_torrents, TorrentStatus
-
-
-
-class MyView(discord.ui.View):
-    @discord.ui.select( # the decorator that lets you specify the properties of the select menu
-        placeholder = "Choose a Flavor!", # the placeholder text that will be displayed if nothing is selected
-        min_values = 1, # the minimum number of values that must be selected by the users
-        max_values = 1, # the maximum number of values that can be selected by the users
-        options = [ # the list of options from which users can choose, a required field
-            discord.SelectOption(
-                label="Vanilla",
-                description="Pick this if you like vanilla!"
-            ),
-            discord.SelectOption(
-                label="Chocolate",
-                description="Pick this if you like chocolate!"
-            ),
-            discord.SelectOption(
-                label="Strawberry",
-                description="Pick this if you like strawberry!"
-            )
-        ]
-    )
-    async def select_callback(self, select, interaction): # the function called when the user is done selecting options
-        await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!")
 
 def get_client():
     intents = discord.Intents.default()
@@ -43,6 +21,20 @@ client = get_client()
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
+    channel = client.get_channel(DISCORD_CHANNEL_ID)
+    # await channel.send("I'm here")
+    # message = (await channel.history(limit=1).flatten())[0]
+    update_downloads.start()
+
+    # message = await channel.fetch_message(id_of_the_message)
+    # await send_download_status(message)
+
+@tasks.loop(seconds=5)
+async def update_downloads():
+    print("updating...")
+    channel = client.get_channel(DISCORD_CHANNEL_ID)
+    message = (await channel.history(limit=1).flatten())[0]
+    await edit_download_status(message)
 
 @client.event
 async def on_message(message):
@@ -52,34 +44,33 @@ async def on_message(message):
 
     await send_download_status(message)    
 
+
 @client.event
-async def send_download_status(message, num_downloads=10):
-    # await message.channel.send('Hello!')
-    # await message.channel.send("Choose a flavor!", view=MyView())
+async def edit_download_status(message, num_downloads=5):
     torrents = get_torrents()
     embeds = []
-
-    import sys
-
-    print(sys.executable)
     
     for torrent in torrents[:min(num_downloads, len(torrents))]:
         embed = create_torrent_embed(torrent)
         embeds.append(embed)
 
-    await message.channel.send(embeds=embeds)
+    await message.edit(f'Last updated at: {datetime.now()}', embeds=embeds)
+
+
+# def delete_all_messages():
 
 
 def create_torrent_embed(torrent):
     user = client.user
+    status_str =f"""{get_progress_bar(torrent.progress)} {torrent.get_progress_str()}%
+    {torrent.get_full_status_str()}"""
 
     embed = discord.Embed(
         title=torrent.name,
         fields=[
             discord.EmbedField(
                 name=torrent.get_status_str(),
-                # ▏▏▎▎▍▍▌▌▌▋▋▊▊▊▉
-                value=f"▰▰▰▰▰▰▰▰▰▰▱▱▱ 100%\ncompleted on {torrent.completed_on}",
+                value=status_str,
                 inline=False,
             ),  
 
