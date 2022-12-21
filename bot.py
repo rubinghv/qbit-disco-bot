@@ -2,12 +2,9 @@ import discord
 from discord.ext.pages import Paginator, Page
 
 from config import DISCORD_TOKEN
-from qbit import get_torrents
+from qbit import get_torrents, TorrentStatus
 
 
-COLOR_DICT = {
-  'stalledUP': discord.Colour.green()
-}
 
 class MyView(discord.ui.View):
     @discord.ui.select( # the decorator that lets you specify the properties of the select menu
@@ -56,51 +53,50 @@ async def on_message(message):
     await send_download_status(message)    
 
 @client.event
-async def send_download_status(message, num_downloads=1):
+async def send_download_status(message, num_downloads=10):
     # await message.channel.send('Hello!')
     # await message.channel.send("Choose a flavor!", view=MyView())
     torrents = get_torrents()
     embeds = []
 
-    user = client.user
+    import sys
+
+    print(sys.executable)
     
     for torrent in torrents[:min(num_downloads, len(torrents))]:
-        embed = discord.Embed(
-            title=torrent.name,
-            fields=[
-                discord.EmbedField(
-                    name="ID",
-                     value=str(user.id), 
-                     inline=False),
-                discord.EmbedField(
-                    name="Progress",
-                    # ▏▏▎▎▍▍▌▌▌▋▋▊▊▊▉
-                    value="▌████-----------------▌ 12%",
-                    inline=False,
-                ),  
-                # discord.EmbedField(
-                #     name='',
-                #     value="32 minutes left",
-                #     inline=True,
-                # ),  
-            ],
-            timestamp=torrent.added_on,
-            # footer= text="This user is not in this server.")
-
-            # set color to match status of download
-            #embed.colour = 
-            description='description text',
-            color = COLOR_DICT[torrent.status]
-        )
-
-        embed.set_footer(text="Footer")
-
-        # embed.set_author(name=user.name)
-        embed.set_thumbnail(url=user.display_avatar.url)
-
+        embed = create_torrent_embed(torrent)
         embeds.append(embed)
 
-    await message.channel.send(embeds=[embed])
+    await message.channel.send(embeds=embeds)
 
+
+def create_torrent_embed(torrent):
+    user = client.user
+
+    embed = discord.Embed(
+        title=torrent.name,
+        fields=[
+            discord.EmbedField(
+                name=torrent.get_status_str(),
+                # ▏▏▎▎▍▍▌▌▌▋▋▊▊▊▉
+                value=f"▰▰▰▰▰▰▰▰▰▰▱▱▱ 100%\ncompleted on {torrent.completed_on}",
+                inline=False,
+            ),  
+
+        ],
+        timestamp=torrent.added_on,
+        # footer= text="This user is not in this server.")
+
+        # set color to match status of download
+        #embed.colour = 
+        description=f'💾 {torrent.get_size_str()}',
+        color = torrent.get_status_color()
+    )
+
+    embed.set_footer(text="Added on")
+
+    # embed.set_author(name=user.name)
+    # embed.set_thumbnail(url=user.display_avatar.url)
+    return embed
 
 client.run(DISCORD_TOKEN)

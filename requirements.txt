@@ -1,2 +1,3 @@
 qbittorrent-api
 py-cord
+logeru
