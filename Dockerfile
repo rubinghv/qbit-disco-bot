@@ -4,8 +4,9 @@ RUN apt-get update
 RUN apt-get install -y git
 RUN git clone https://github.com/rubinghv/qbit-disco-bot.git 
 
-RUN cat qbit-disco-bot/requirements.txt 
-RUN pip3 install -r qbit-disco-bot/requirements.txt 
+WORKDIR /qbit-disco-bot
 
+RUN cat requirements.txt 
+RUN pip3 install -r requirements.txt 
 
-WORKDIR /app
+CMD [ "python3", "-m" "discobot"]
