@@ -61,6 +61,11 @@ def create_torrent_embed(torrent):
     status_str =f"""{get_progress_bar(torrent.progress)} {torrent.get_progress_str()}%
 {torrent.get_full_status_str()}"""
 
+    description_str = f'💾 {torrent.get_size_str()}'
+    if torrent.status != TorrentStatus.COMPLETED and torrent.status !=TorrentStatus.MOVING:
+        description_str += f' ({torrent.get_amount_left_str()} left)'
+        
+
     embed = discord.Embed(
         title=torrent.name,
         fields=[
@@ -76,7 +81,7 @@ def create_torrent_embed(torrent):
 
         # set color to match status of download
         #embed.colour = 
-        description=f'💾 {torrent.get_size_str()}',
+        description=description_str,
         color = torrent.get_status_color()
     )
 
