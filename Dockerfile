@@ -9,4 +9,6 @@ WORKDIR /qbit-disco-bot
 RUN cat requirements.txt 
 RUN pip3 install -r requirements.txt 
 
-CMD [ "python3", "-m" "discobot"]
+COPY config.py config.py
+
+CMD [ "python3", "-m", "discobot"]

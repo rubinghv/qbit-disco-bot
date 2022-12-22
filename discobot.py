@@ -15,7 +15,7 @@ def get_client():
 
     return client
 
-
+print("Starting...")
 client = get_client()
 
 @client.event
