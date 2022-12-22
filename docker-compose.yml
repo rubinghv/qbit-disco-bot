@@ -1,0 +1,8 @@
+version: "3"
+services:
+  qbitdiscobot:
+    container_name: qbitdiscobot
+    build: https://github.com/rubinghv/qbit-disco-bot.git#dev
+    image: qbit-disco-bot
+    volumes:
+      - /location/to/config.py:/app/config.py
