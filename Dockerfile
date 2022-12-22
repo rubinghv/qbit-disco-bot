@@ -9,6 +9,4 @@ WORKDIR /app
 RUN cat requirements.txt 
 RUN pip3 install -r requirements.txt 
 
-COPY config.py config.py
-
 CMD [ "python3", "-u", "-m", "discobot"]
