@@ -71,7 +71,7 @@ class TorrentItem(object):
         elif self.status == TorrentStatus.STALLED:
             return '⚠️ Downloading stalled'
         elif self.status == TorrentStatus.MOVING:
-            return '🐌 Moving completed download'
+            return '🚚 Moving completed download'
         elif self.status == TorrentStatus.UNKNOWN:
             return f'⛔ Status unknown {self.status_str}'
 
